@@ -1,13 +1,5 @@
--- [[ XPEL HUB - VISUAL INTERFACE V3 (FIXED & TESTED) ]]
+-- [[ XPEL HUB - VISUAL INTERFACE V2.1 (FIXED + MODERN) ]]
 local Functions = loadstring(game:HttpGet("https://raw.githubusercontent.com/PAPAINOEL9643/hubluam/refs/heads/main/Functions.lua"))()
-
--- Garante que o Settings existe para não dar erro
-if not _G.XPEL_Settings then
-    _G.XPEL_Settings = {
-        Aimbot = false, Aimbot360 = false, ESP = {Enabled = false, Box = false, Names = false}, Running = true
-    }
-end
-
 local Settings = _G.XPEL_Settings
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -17,11 +9,11 @@ local RunService = game:GetService("RunService")
 
 -- UI CORE
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "XPEL_UI_FINAL"
+ScreenGui.Name = "XPEL_UI_" .. math.random(100,999)
 ScreenGui.Parent = Functions.GetSafeParent()
 ScreenGui.ResetOnSpawn = false
 
--- DRAGGABLE
+-- DRAGGABLE FUNCTION
 local function MakeDraggable(gui)
     local dragging, dragInput, dragStart, startPos
     gui.InputBegan:Connect(function(input)
@@ -42,26 +34,29 @@ end
 
 -- MAIN FRAME
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 550, 0, 380)
-MainFrame.Position = UDim2.new(0.5, -275, 0.5, -190)
-MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
+MainFrame.Size = UDim2.new(0, 580, 0, 380)
+MainFrame.Position = UDim2.new(0.5, -290, 0.5, -190)
+MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+MainFrame.BackgroundTransparency = 0.1 -- Efeito levemente transparente
 MainFrame.BorderSizePixel = 0
-Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
 
 local MainStroke = Instance.new("UIStroke", MainFrame)
 MainStroke.Color = Color3.fromRGB(0, 150, 255)
-MainStroke.Thickness = 1.8
+MainStroke.Thickness = 1.5
+MainStroke.Transparency = 0.5
 MakeDraggable(MainFrame)
 
 -- SIDEBAR
 local SideBar = Instance.new("Frame", MainFrame)
-SideBar.Size = UDim2.new(0, 160, 1, 0)
-SideBar.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+SideBar.Size = UDim2.new(0, 170, 1, 0)
+SideBar.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+SideBar.BackgroundTransparency = 0.2
 SideBar.BorderSizePixel = 0
 local SideCorner = Instance.new("UICorner", SideBar)
-SideCorner.CornerRadius = UDim.new(0, 10)
+SideCorner.CornerRadius = UDim.new(0, 12)
 
---- [[ PERFIL DO PLAYER ]] ---
+--- [[ SEÇÃO DE PERFIL ]] ---
 local ProfileFrame = Instance.new("Frame", SideBar)
 ProfileFrame.Size = UDim2.new(1, 0, 0, 120)
 ProfileFrame.BackgroundTransparency = 1
@@ -71,7 +66,8 @@ UserImage.Size = UDim2.new(0, 60, 0, 60)
 UserImage.Position = UDim2.new(0.5, -30, 0, 20)
 UserImage.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 UserImage.Image = "rbxthumb://type=AvatarHeadShot&id=" .. LocalPlayer.UserId .. "&w=150&h=150"
-Instance.new("UICorner", UserImage).CornerRadius = UDim.new(1, 0)
+local ImgCorner = Instance.new("UICorner", UserImage)
+ImgCorner.CornerRadius = UDim.new(1, 0)
 Instance.new("UIStroke", UserImage).Color = Color3.fromRGB(0, 150, 255)
 
 local UserName = Instance.new("TextLabel", ProfileFrame)
@@ -83,18 +79,24 @@ UserName.Font = Enum.Font.GothamBold
 UserName.TextSize = 14
 UserName.BackgroundTransparency = 1
 
--- BOTOES CONTAINER
+local Line = Instance.new("Frame", SideBar)
+Line.Size = UDim2.new(0.8, 0, 0, 1)
+Line.Position = UDim2.new(0.1, 0, 0, 120)
+Line.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+Line.BorderSizePixel = 0
+
+-- CONTAINER DOS BOTÕES
 local TabHolder = Instance.new("Frame", SideBar)
 TabHolder.Position = UDim2.new(0, 10, 0, 130)
 TabHolder.Size = UDim2.new(1, -20, 1, -140)
 TabHolder.BackgroundTransparency = 1
 local TabList = Instance.new("UIListLayout", TabHolder)
-TabList.Padding = UDim.new(0, 8)
+TabList.Padding = UDim.new(0, 6)
 
--- CONTAINER DE PAGINAS
+-- CONTAINER DE PÁGINAS
 local PageContainer = Instance.new("Frame", MainFrame)
-PageContainer.Position = UDim2.new(0, 175, 0, 15)
-PageContainer.Size = UDim2.new(1, -190, 1, -30)
+PageContainer.Position = UDim2.new(0, 180, 0, 40)
+PageContainer.Size = UDim2.new(1, -195, 1, -55)
 PageContainer.BackgroundTransparency = 1
 
 local Pages = {}
@@ -106,24 +108,28 @@ local function CreateTab(name)
     TabBtn.Font = Enum.Font.GothamSemibold
     TabBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
     TabBtn.TextSize = 13
-    Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 6)
+    TabBtn.AutoButtonColor = false
+    Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 8)
 
     local Page = Instance.new("ScrollingFrame", PageContainer)
     Page.Size = UDim2.new(1, 0, 1, 0)
     Page.BackgroundTransparency = 1
     Page.Visible = false
-    Page.ScrollBarThickness = 0
-    Instance.new("UIListLayout", Page).Padding = UDim.new(0, 10)
+    Page.ScrollBarThickness = 2
+    Page.CanvasSize = UDim2.new(0,0,0,0)
+    Page.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    
+    local PageLayout = Instance.new("UIListLayout", Page)
+    PageLayout.Padding = UDim.new(0, 8)
+    PageLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
     TabBtn.MouseButton1Click:Connect(function()
-        for _, p in pairs(Pages) do 
+        for _, p in pairs(Pages) do
             p.Page.Visible = false
-            p.Btn.TextColor3 = Color3.fromRGB(150,150,150)
-            p.Btn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+            TweenService:Create(p.Btn, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(25, 25, 25), TextColor3 = Color3.fromRGB(150, 150, 150)}):Play()
         end
         Page.Visible = true
-        TabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        TabBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+        TweenService:Create(TabBtn, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(0, 150, 255), TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
     end)
     Pages[name] = {Page = Page, Btn = TabBtn}
     return Page
@@ -132,56 +138,105 @@ end
 -- COMPONENTE TOGGLE
 local function AddToggle(parent, text, callback)
     local btn = Instance.new("TextButton", parent)
-    btn.Size = UDim2.new(1, -5, 0, 40)
-    btn.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+    btn.Size = UDim2.new(0.95, 0, 0, 40)
+    btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
     btn.Text = "    " .. text
     btn.TextColor3 = Color3.fromRGB(200, 200, 200)
     btn.TextXAlignment = Enum.TextXAlignment.Left
     btn.Font = Enum.Font.Gotham
     btn.TextSize = 13
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
 
     local Indicator = Instance.new("Frame", btn)
-    Indicator.Size = UDim2.new(0, 10, 0, 10)
-    Indicator.Position = UDim2.new(1, -25, 0.5, -5)
-    Indicator.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    Indicator.Size = UDim2.new(0, 28, 0, 14)
+    Indicator.Position = UDim2.new(1, -40, 0.5, -7)
+    Indicator.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
     Instance.new("UICorner", Indicator).CornerRadius = UDim.new(1, 0)
+    
+    local Circle = Instance.new("Frame", Indicator)
+    Circle.Size = UDim2.new(0, 10, 0, 10)
+    Circle.Position = UDim2.new(0, 2, 0.5, -5)
+    Circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Instance.new("UICorner", Circle).CornerRadius = UDim.new(1, 0)
 
     local active = false
     btn.MouseButton1Click:Connect(function()
         active = not active
-        TweenService:Create(Indicator, TweenInfo.new(0.3), {
-            BackgroundColor3 = active and Color3.fromRGB(0, 150, 255) or Color3.fromRGB(50, 50, 50)
-        }):Play()
+        local goalPos = active and UDim2.new(1, -12, 0.5, -5) or UDim2.new(0, 2, 0.5, -5)
+        local goalCol = active and Color3.fromRGB(0, 150, 255) or Color3.fromRGB(40, 40, 40)
+        
+        TweenService:Create(Circle, TweenInfo.new(0.2), {Position = goalPos}):Play()
+        TweenService:Create(Indicator, TweenInfo.new(0.2), {BackgroundColor3 = goalCol}):Play()
         callback(active)
     end)
 end
 
--- CRIANDO CONTEUDO
-local P1 = CreateTab("Início")
-local P2 = CreateTab("Aimbot")
-local P3 = CreateTab("Visual")
+-- BOTÕES DE CONTROLE (FECHAR E MINIMIZAR)
+local ControlFrame = Instance.new("Frame", MainFrame)
+ControlFrame.Size = UDim2.new(0, 60, 0, 30)
+ControlFrame.Position = UDim2.new(1, -65, 0, 5)
+ControlFrame.BackgroundTransparency = 1
 
-local Lbl = Instance.new("TextLabel", P1)
-Lbl.Size = UDim2.new(1, 0, 0, 30)
-Lbl.Text = "Bem-vindo, " .. LocalPlayer.Name
-Lbl.TextColor3 = Color3.new(1,1,1)
-Lbl.BackgroundTransparency = 1
+local CloseBtn = Instance.new("TextButton", ControlFrame)
+CloseBtn.Text = "×"
+CloseBtn.Size = UDim2.new(0, 25, 1, 0)
+CloseBtn.Position = UDim2.new(0.5, 5, 0, 0)
+CloseBtn.TextColor3 = Color3.fromRGB(255, 80, 80)
+CloseBtn.BackgroundTransparency = 1
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.TextSize = 22
+CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() Settings.Running = false end)
 
-AddToggle(P2, "Ativar Aimbot", function(v) Settings.Aimbot = v end)
-AddToggle(P3, "ESP Box", function(v) Settings.ESP.Box = v end)
+local MinimizeBtn = Instance.new("TextButton", ControlFrame)
+MinimizeBtn.Text = "−"
+MinimizeBtn.Size = UDim2.new(0, 25, 1, 0)
+MinimizeBtn.Position = UDim2.new(0, 0, 0, 0)
+MinimizeBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+MinimizeBtn.BackgroundTransparency = 1
+MinimizeBtn.Font = Enum.Font.GothamBold
+MinimizeBtn.TextSize = 20
 
--- FECHAR
-local Close = Instance.new("TextButton", MainFrame)
-Close.Text = "X"
-Close.Position = UDim2.new(1, -30, 0, 10)
-Close.Size = UDim2.new(0, 25, 0, 25)
-Close.TextColor3 = Color3.new(1,0,0)
-Close.BackgroundTransparency = 1
-Close.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
+local minimized = false
+MinimizeBtn.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    SideBar.Visible = not minimized
+    PageContainer.Visible = not minimized
+    MainFrame:TweenSize(minimized and UDim2.new(0, 580, 0, 40) or UDim2.new(0, 580, 0, 380), "Out", "Quart", 0.3, true)
+end)
 
--- START
+-- CRIANDO AS ABAS
+local PaginaInicio = CreateTab("Início")
+local PaginaAimbot = CreateTab("Aimbot")
+local PaginaVisual = CreateTab("Visual")
+
+-- CONTEÚDO INÍCIO
+local Welcome = Instance.new("TextLabel", PaginaInicio)
+Welcome.Size = UDim2.new(1, 0, 0, 40)
+Welcome.Text = "XPEL HUB - Status: Online"
+Welcome.TextColor3 = Color3.fromRGB(0, 150, 255)
+Welcome.BackgroundTransparency = 1
+Welcome.Font = Enum.Font.GothamBold
+Welcome.TextSize = 14
+
+local FPSLabel = Instance.new("TextLabel", PaginaInicio)
+FPSLabel.Size = UDim2.new(1, 0, 0, 30)
+FPSLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
+FPSLabel.BackgroundTransparency = 1
+RunService.RenderStepped:Connect(function(dt)
+    FPSLabel.Text = "Performance: " .. math.floor(1/dt) .. " FPS"
+end)
+
+-- CONTEÚDO AIMBOT
+AddToggle(PaginaAimbot, "Ativar Aimbot", function(v) Settings.Aimbot = v end)
+AddToggle(PaginaAimbot, "Aimbot 360", function(v) Settings.Aimbot360 = v end)
+
+-- CONTEÚDO VISUAL
+AddToggle(PaginaVisual, "ESP Geral", function(v) Settings.ESP.Enabled = v end)
+AddToggle(PaginaVisual, "ESP Box", function(v) Settings.ESP.Box = v end)
+AddToggle(PaginaVisual, "ESP Nomes", function(v) Settings.ESP.Names = v end)
+
+-- INICIALIZAÇÃO
 Functions.Init()
 Pages["Início"].Page.Visible = true
+Pages["Início"].Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
 Pages["Início"].Btn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
-Pages["Início"].Btn.TextColor3 = Color3.new(1,1,1)
