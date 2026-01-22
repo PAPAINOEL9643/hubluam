@@ -15,7 +15,7 @@ local Camera = workspace.CurrentCamera
 Logic.Settings = {
     Aimbot = false,
     Aimbot360 = false,
-    AimMode = "Sempre", 
+    AimMode = "Sempre", -- Opções: "Sempre" ou "Botão Direito"
     FOV = 150,
     Smoothness = 0.5,
     TargetPart = "Head",
@@ -121,7 +121,7 @@ Logic.CreateESP = function(Player)
     Logic.ESP_Table[Player] = { Remove = function() connection:Disconnect(); Box:Remove(); Name:Remove(); Line:Remove() end }
 end
 
--- ================= LÓGICA DO AIMBOT =================
+-- ================= LÓGICA DO AIMBOT (CORRIGIDA) =================
 Logic.GetClosest = function()
     local target, shortest = nil, (Logic.Settings.Aimbot360 and math.huge or Logic.Settings.FOV)
     local mouseLoc = UserInputService:GetMouseLocation()
@@ -135,9 +135,9 @@ Logic.GetClosest = function()
             if part and hum and hum.Health > 0 then
                 local pos, onScreen = Camera:WorldToViewportPoint(part.Position)
                 if onScreen or Logic.Settings.Aimbot360 then
-                    if IsVisible(part) then
-                        local dist = (Vector2.new(pos.X, pos.Y) - mouseLoc).Magnitude
-                        if dist < shortest then
+                    local dist = (Vector2.new(pos.X, pos.Y) - mouseLoc).Magnitude
+                    if dist < shortest then
+                        if IsVisible(part) then
                             shortest = dist
                             target = part
                         end
@@ -149,6 +149,28 @@ Logic.GetClosest = function()
     return target
 end
 
+-- LOOP DE EXECUÇÃO DO AIMBOT (O CORAÇÃO DO SCRIPT)
+RunService.RenderStepped:Connect(function()
+    if Logic.Settings.Running and Logic.Settings.Aimbot then
+        local target = Logic.GetClosest()
+        
+        -- Verifica se deve mirar (Sempre ou segurando botão direito)
+        local isAiming = false
+        if Logic.Settings.AimMode == "Sempre" then
+            isAiming = true
+        else
+            isAiming = UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2)
+        end
+
+        if target and isAiming then
+            -- Suavidade calculada para não tremer
+            local goal = CFrame.new(Camera.CFrame.Position, target.Position)
+            Camera.CFrame = Camera.CFrame:Lerp(goal, Logic.Settings.Smoothness)
+        end
+    end
+end)
+
+-- ================= PERFORMANCE =================
 Logic.OptimizePerformance = function(v)
     if not v then return end
     for _, obj in pairs(workspace:GetDescendants()) do
