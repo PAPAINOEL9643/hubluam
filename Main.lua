@@ -3,7 +3,21 @@
 -- [ SECTION 1: INICIALIZAÇÃO E LÓGICA ]
 local user = "PAPAINOEL9643"
 local repo = "hubluam"
-local Logic = loadstring(game:HttpGet("https://raw.githubusercontent.com/PAPAINOEL9643/hubluam/refs/heads/main/Functions.lua"))()
+-- Link Raw corrigido para garantir o carregamento do código puro
+local url = "https://raw.githubusercontent.com/"..user.."/"..repo.."/main/Functions.lua"
+
+local Logic
+local success, err = pcall(function()
+    return loadstring(game:HttpGet(url))()
+end)
+
+if success and err then
+    Logic = err
+else
+    -- Fallback de segurança caso o GitHub falhe momentaneamente
+    warn("XPEL: Erro ao carregar Logic Engine, tentando novamente...")
+    return
+end
 
 local Settings = Logic.Settings
 local Players = game:GetService("Players")
@@ -54,7 +68,9 @@ FloatingIcon.Font = Enum.Font.GothamBold
 FloatingIcon.TextSize = 22
 FloatingIcon.Visible = false
 Instance.new("UICorner", FloatingIcon).CornerRadius = UDim.new(1, 0)
-Instance.new("UIStroke", FloatingIcon).Color = Settings.ThemeColor
+local IconStroke = Instance.new("UIStroke", FloatingIcon)
+IconStroke.Color = Settings.ThemeColor
+IconStroke.Thickness = 2
 MakeDraggable(FloatingIcon)
 
 -- Frame Principal
@@ -233,27 +249,22 @@ local TabAimbot = CreateTab("Aimbot")
 local TabVisual = CreateTab("Visual")
 local TabPerf   = CreateTab("Sistema")
 
--- Obtendo informações do Jogo Atual
 local gameInfo = MarketPlaceService:GetProductInfo(game.PlaceId)
 
--- Aba Início (Visual Profissional com Jogo)
+-- Aba Início
 local GameIcon = Instance.new("ImageLabel", TabInicio)
 GameIcon.Size = UDim2.new(0, 100, 0, 100)
 GameIcon.Position = UDim2.new(0.5, -50, 0, 10)
 GameIcon.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-GameIcon.Image = "rbxassetid://" .. game.PlaceId -- Tenta puxar o ícone pelo ID do mapa
--- Caso rbxassetid não carregue o ícone direto, usamos uma thumbnail:
 GameIcon.Image = "https://www.roblox.com/asset-thumbnail/image?assetId="..game.PlaceId.."&width=420&height=420&format=png"
 Instance.new("UICorner", GameIcon).CornerRadius = UDim.new(0, 8)
-local IconStroke = Instance.new("UIStroke", GameIcon)
-IconStroke.Color = Settings.ThemeColor
-IconStroke.Thickness = 2
+Instance.new("UIStroke", GameIcon).Color = Settings.ThemeColor
 
 local GameNameLabel = Instance.new("TextLabel", TabInicio)
 GameNameLabel.Size = UDim2.new(1, 0, 0, 30)
 GameNameLabel.Position = UDim2.new(0, 0, 0, 115)
 GameNameLabel.BackgroundTransparency = 1
-GameNameLabel.Text = gameInfo.Name -- Nome do jogo dinâmico
+GameNameLabel.Text = gameInfo.Name
 GameNameLabel.TextColor3 = Color3.new(1, 1, 1)
 GameNameLabel.Font = Enum.Font.GothamBold
 GameNameLabel.TextSize = 18
@@ -270,7 +281,7 @@ Welcome.TextSize = 14
 local FPSLabel = Instance.new("TextLabel", TabInicio)
 FPSLabel.Size = UDim2.new(1, 0, 0, 40)
 FPSLabel.Position = UDim2.new(0, 0, 0, 170)
-FPSLabel.Text = "Calculando FPS..."
+FPSLabel.Text = "FPS: 60"
 FPSLabel.TextColor3 = Color3.new(1, 1, 1)
 FPSLabel.Font = Enum.Font.GothamBold
 FPSLabel.TextSize = 22
@@ -279,9 +290,10 @@ FPSLabel.BackgroundTransparency = 1
 -- Aba Aimbot
 AddToggle(TabAimbot, "Ativar Aimbot", function(v) Settings.Aimbot = v end)
 AddToggle(TabAimbot, "Aimbot 360º", function(v) Settings.Aimbot360 = v end)
-AddSlider(TabAimbot, "Suavidade", 1, 100, 50, function(v) Settings.Smoothness = math.clamp(v/100, 0.01, 1) end)
+-- Ajuste de Smoothness para escala 0 a 1 (Exigido pelo Lerp)
+AddSlider(TabAimbot, "Suavidade", 1, 100, 50, function(v) Settings.Smoothness = (101 - v) / 100 end)
 
--- Aba Visual (ESPs)
+-- Aba Visual
 AddToggle(TabVisual, "Ativar ESP Geral", function(v) Settings.ESP.Enabled = v end)
 AddToggle(TabVisual, "ESP Box (Caixa)", function(v) Settings.ESP.Box = v end)
 AddToggle(TabVisual, "ESP Linhas", function(v) Settings.ESP.Lines = v end)
@@ -301,7 +313,7 @@ Players.PlayerAdded:Connect(function(p) if p ~= LocalPlayer then Logic.CreateESP
 RunService.RenderStepped:Connect(function()
     if not Settings.Running then return end
     local fps = math.floor(1 / RunService.RenderStepped:Wait())
-    FPSLabel.Text = fps .. " FPS"
+    FPSLabel.Text = "FPS: " .. fps
     
     FOVCircle.Visible = Settings.Aimbot and not Settings.Aimbot360
     FOVCircle.Position = UserInputService:GetMouseLocation()
@@ -310,11 +322,12 @@ RunService.RenderStepped:Connect(function()
     if Settings.Aimbot then
         local target = Logic.GetClosest()
         local isClicking = (Settings.AimMode == "Sempre") or 
-                           (Settings.AimMode == "Ao Mirar" and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2))
+                           (UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2))
         
         if target and isClicking then
-            local targetPos = CFrame.new(Camera.CFrame.Position, target.Position)
-            Camera.CFrame = Camera.CFrame:Lerp(targetPos, Settings.Smoothness)
+            -- Suavidade profissional com Lerp corrigido
+            local lookAt = CFrame.new(Camera.CFrame.Position, target.Position)
+            Camera.CFrame = Camera.CFrame:Lerp(lookAt, Settings.Smoothness or 0.1)
         end
     end
 end)
@@ -338,7 +351,6 @@ CloseBtn.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
--- Default Page
 Pages["Início"].Page.Visible = true
 Pages["Início"].Btn.BackgroundColor3 = Settings.ThemeColor
 Pages["Início"].Btn.TextColor3 = Color3.new(1,1,1)
