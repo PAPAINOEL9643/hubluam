@@ -1,5 +1,25 @@
--- [[ XPEL HUB - VISUAL INTERFACE FINAL ]]
+-- [[ XPEL HUB - VISUAL INTERFACE FINAL CORRIGIDO ]]
 
+-- Inicialização das Configurações Globais (Essencial para a Logística funcionar)
+_G.XPEL_Settings = {
+    Aimbot = false,
+    Aimbot360 = false,
+    AimMode = "Sempre", 
+    FOV = 150,
+    Smoothness = 0.2, -- Ajustado para ser mais fluido
+    TargetPart = "Head",
+    ESP = {
+        Enabled = false,
+        Box = false,
+        Lines = false,
+        Names = false,
+        Colors = { Main = Color3.fromRGB(0, 255, 255) }
+    },
+    Running = true
+}
+
+-- Carregamento das Funções (Logística)
+-- Certifique-se que o link abaixo aponta para o seu arquivo de LOGÍSTICA
 local Functions = loadstring(game:HttpGet(
     "https://raw.githubusercontent.com/PAPAINOEL9643/hubluam/refs/heads/main/Functions.lua"
 ))()
@@ -7,19 +27,17 @@ local Functions = loadstring(game:HttpGet(
 local Settings = _G.XPEL_Settings
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
-local MarketService = game:GetService("MarketplaceService")
 local UIS = game:GetService("UserInputService")
 
 local LocalPlayer = Players.LocalPlayer
-local GameInfo = MarketService:GetProductInfo(game.PlaceId)
 
 -- ================= UI CORE =================
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "XPEL_ULTRA_V4"
-ScreenGui.Parent = Functions.GetSafeParent()
+ScreenGui.Parent = (gethui and gethui()) or game:GetService("CoreGui")
 ScreenGui.ResetOnSpawn = false
 
--- ================= DRAG =================
+-- ================= DRAG SYSTEM =================
 local function MakeDraggable(gui)
     local dragging, dragStart, startPos
     gui.InputBegan:Connect(function(input)
@@ -32,43 +50,32 @@ local function MakeDraggable(gui)
     UIS.InputChanged:Connect(function(input)
         if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
             local delta = input.Position - dragStart
-            gui.Position = UDim2.new(
-                startPos.X.Scale, startPos.X.Offset + delta.X,
-                startPos.Y.Scale, startPos.Y.Offset + delta.Y
-            )
+            gui.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
     end)
-    gui.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
+    UIS.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
     end)
 end
 
--- ================= MAIN =================
+-- ================= MAIN FRAME =================
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Size = UDim2.new(0, 580, 0, 380)
 MainFrame.Position = UDim2.new(0.5, -290, 0.5, -190)
 MainFrame.BackgroundColor3 = Color3.fromRGB(12,12,12)
 MainFrame.BorderSizePixel = 0
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0,10)
-Instance.new("UIStroke", MainFrame).Color = Color3.fromRGB(0,150,255)
+local Stroke = Instance.new("UIStroke", MainFrame)
+Stroke.Color = Color3.fromRGB(0,150,255)
+Stroke.Thickness = 1.5
 MakeDraggable(MainFrame)
 
--- ================= SIDEBAR =================
+-- Sidebar e Profile (Mantidos conforme seu design)
 local SideBar = Instance.new("Frame", MainFrame)
 SideBar.Size = UDim2.new(0,160,1,0)
 SideBar.BackgroundColor3 = Color3.fromRGB(18,18,18)
-SideBar.BorderSizePixel = 0
 Instance.new("UICorner", SideBar).CornerRadius = UDim.new(0,10)
 
-local Fix = Instance.new("Frame", SideBar)
-Fix.Size = UDim2.new(0,20,1,0)
-Fix.Position = UDim2.new(1,-20,0,0)
-Fix.BackgroundColor3 = SideBar.BackgroundColor3
-Fix.BorderSizePixel = 0
-
--- ================= PROFILE =================
 local Profile = Instance.new("Frame", SideBar)
 Profile.Size = UDim2.new(1,0,0,100)
 Profile.BackgroundTransparency = 1
@@ -79,21 +86,14 @@ Avatar.Position = UDim2.new(0.5,-27,0,15)
 Avatar.Image = "rbxthumb://type=AvatarHeadShot&id="..LocalPlayer.UserId.."&w=150&h=150"
 Instance.new("UICorner", Avatar).CornerRadius = UDim.new(1,0)
 
-local Name = Instance.new("TextLabel", Profile)
-Name.Size = UDim2.new(1,0,0,20)
-Name.Position = UDim2.new(0,0,0,75)
-Name.BackgroundTransparency = 1
-Name.Text = LocalPlayer.DisplayName
-Name.TextColor3 = Color3.new(1,1,1)
-Name.Font = Enum.Font.GothamBold
-Name.TextSize = 11
-
--- ================= TABS =================
+-- ================= TABS & PAGES =================
 local TabHolder = Instance.new("Frame", SideBar)
 TabHolder.Size = UDim2.new(1,0,1,-110)
 TabHolder.Position = UDim2.new(0,0,0,110)
 TabHolder.BackgroundTransparency = 1
-Instance.new("UIListLayout", TabHolder).Padding = UDim.new(0,8)
+local TabList = Instance.new("UIListLayout", TabHolder)
+TabList.Padding = UDim.new(0,8)
+TabList.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
 local PageContainer = Instance.new("Frame", MainFrame)
 PageContainer.Position = UDim2.new(0,175,0,15)
@@ -104,7 +104,7 @@ local Pages = {}
 
 local function CreateTab(name)
     local Btn = Instance.new("TextButton", TabHolder)
-    Btn.Size = UDim2.new(0,130,0,32)
+    Btn.Size = UDim2.new(0,140,0,32)
     Btn.BackgroundColor3 = Color3.fromRGB(25,25,25)
     Btn.Text = name:upper()
     Btn.Font = Enum.Font.GothamBold
@@ -116,12 +116,13 @@ local function CreateTab(name)
     Page.Size = UDim2.new(1,0,1,0)
     Page.Visible = false
     Page.BackgroundTransparency = 1
-    Page.ScrollBarThickness = 0
-
+    Page.ScrollBarThickness = 2
+    Page.CanvasSize = UDim2.new(0,0,0,0)
+    
     local Layout = Instance.new("UIListLayout", Page)
     Layout.Padding = UDim.new(0,8)
     Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        Page.CanvasSize = UDim2.new(0,0,0,Layout.AbsoluteContentSize.Y+10)
+        Page.CanvasSize = UDim2.new(0,0,0,Layout.AbsoluteContentSize.Y + 10)
     end)
 
     Btn.MouseButton1Click:Connect(function()
@@ -139,39 +140,39 @@ local function CreateTab(name)
     return Page
 end
 
--- ================= TOGGLE =================
-local function AddToggle(parent,text,callback)
+-- ================= UI COMPONENTS =================
+local function AddToggle(parent, text, callback)
     local Btn = Instance.new("TextButton", parent)
     Btn.Size = UDim2.new(1,-10,0,40)
     Btn.BackgroundColor3 = Color3.fromRGB(20,20,20)
     Btn.Text = "      "..text
     Btn.Font = Enum.Font.GothamMedium
     Btn.TextSize = 13
-    Btn.TextXAlignment = Left
+    Btn.TextXAlignment = Enum.TextXAlignment.Left
     Btn.TextColor3 = Color3.fromRGB(200,200,200)
     Instance.new("UICorner", Btn)
 
-    local Bar = Instance.new("Frame", Btn)
-    Bar.Size = UDim2.new(0,4,0,20)
-    Bar.Position = UDim2.new(0,10,0.5,-10)
-    Bar.BackgroundColor3 = Color3.fromRGB(40,40,40)
-    Instance.new("UICorner", Bar)
+    local Indicator = Instance.new("Frame", Btn)
+    Indicator.Size = UDim2.new(0,4,0,20)
+    Indicator.Position = UDim2.new(0,10,0.5,-10)
+    Indicator.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    Instance.new("UICorner", Indicator)
 
     local state = false
     Btn.MouseButton1Click:Connect(function()
         state = not state
-        Bar.BackgroundColor3 = state and Color3.fromRGB(0,150,255) or Color3.fromRGB(40,40,40)
+        Indicator.BackgroundColor3 = state and Color3.fromRGB(0,150,255) or Color3.fromRGB(40,40,40)
         Btn.TextColor3 = state and Color3.new(1,1,1) or Color3.fromRGB(200,200,200)
         callback(state)
     end)
 end
 
--- ================= PAGES =================
+-- ================= PAGES CONTENT =================
 local TabInicio = CreateTab("Início")
 local TabAimbot = CreateTab("Aimbot")
 local TabVisual = CreateTab("Visual")
 
--- INÍCIO
+-- PÁGINA: INÍCIO
 local Welcome = Instance.new("TextLabel", TabInicio)
 Welcome.Size = UDim2.new(1,0,0,40)
 Welcome.BackgroundTransparency = 1
@@ -180,48 +181,36 @@ Welcome.Font = Enum.Font.GothamBold
 Welcome.TextSize = 14
 Welcome.TextColor3 = Color3.new(1,1,1)
 
-local FPS = Instance.new("TextLabel", TabInicio)
-FPS.Size = UDim2.new(1,0,0,30)
-FPS.BackgroundTransparency = 1
-FPS.Font = Enum.Font.Code
-FPS.TextSize = 12
-FPS.TextColor3 = Color3.fromRGB(0,255,120)
+local FPSLabel = Instance.new("TextLabel", TabInicio)
+FPSLabel.Size = UDim2.new(1,0,0,30)
+FPSLabel.BackgroundTransparency = 1
+FPSLabel.Font = Enum.Font.Code
+FPSLabel.TextSize = 12
+FPSLabel.TextColor3 = Color3.fromRGB(0,255,120)
 
 RunService.RenderStepped:Connect(function(dt)
-    FPS.Text = "FPS: "..math.floor(1/dt)
+    FPSLabel.Text = "FPS: "..math.floor(1/dt).." | STATUS: ATIVO"
 end)
 
--- AIMBOT
-AddToggle(TabAimbot,"Ativar Aimbot",function(v) Settings.Aimbot=v end)
-AddToggle(TabAimbot,"Aimbot 360°",function(v) Settings.Aimbot360=v end)
-AddToggle(TabAimbot,"WallCheck",function(v) Settings.WallCheck=v end)
+-- PÁGINA: AIMBOT
+AddToggle(TabAimbot, "Ativar Aimbot", function(v) Settings.Aimbot = v end)
+AddToggle(TabAimbot, "Aimbot 360 (Sem FOV)", function(v) Settings.Aimbot360 = v end)
 
--- VISUAL (ESP FUNCIONAL)
-AddToggle(TabVisual,"ESP Geral",function(v)
-    Settings.ESP.Enabled = v
-    if not v then
-        Settings.ESP.Box=false
-        Settings.ESP.Names=false
-        Settings.ESP.Lines=false
-    end
+-- PÁGINA: VISUAL (ESP)
+AddToggle(TabVisual, "Ativar ESP Master", function(v) 
+    Settings.ESP.Enabled = v 
+end)
+AddToggle(TabVisual, "Exibir Caixas (Box)", function(v) 
+    Settings.ESP.Box = v 
+end)
+AddToggle(TabVisual, "Exibir Nomes", function(v) 
+    Settings.ESP.Names = v 
+end)
+AddToggle(TabVisual, "Exibir Linhas (Tracers)", function(v) 
+    Settings.ESP.Lines = v 
 end)
 
-AddToggle(TabVisual,"ESP Box",function(v)
-    Settings.ESP.Box=v
-    Settings.ESP.Enabled = v
-end)
-
-AddToggle(TabVisual,"ESP Nomes",function(v)
-    Settings.ESP.Names=v
-    Settings.ESP.Enabled = v
-end)
-
-AddToggle(TabVisual,"Tracers",function(v)
-    Settings.ESP.Lines=v
-    Settings.ESP.Enabled = v
-end)
-
--- FECHAR
+-- ================= FOOTER & CLOSE =================
 local Close = Instance.new("TextButton", MainFrame)
 Close.Size = UDim2.new(0,30,0,30)
 Close.Position = UDim2.new(1,-35,0,5)
@@ -230,6 +219,7 @@ Close.TextSize = 25
 Close.TextColor3 = Color3.fromRGB(255,80,80)
 Close.BackgroundTransparency = 1
 Close.MouseButton1Click:Connect(function()
+    Settings.Running = false -- Para o loop da logística
     ScreenGui:Destroy()
 end)
 
@@ -238,4 +228,7 @@ Pages["Início"].Page.Visible = true
 Pages["Início"].Btn.TextColor3 = Color3.fromRGB(0,150,255)
 Pages["Início"].Btn.BackgroundColor3 = Color3.fromRGB(30,30,30)
 
-Functions.Init()
+-- Inicia a lógica do seu arquivo externo
+task.spawn(function()
+    Functions.Init()
+end)
