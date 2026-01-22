@@ -3,7 +3,7 @@
 -- [ SECTION 1: INICIALIZAÇÃO E LÓGICA ]
 local user = "PAPAINOEL9643"
 local repo = "hubluam"
-local Logic = loadstring(game:HttpGet("https://raw.githubusercontent.com/"..user.."/"..repo.."/main/Functions.lua"))()
+local Logic = loadstring(game:HttpGet("https://github.com/PAPAINOEL9643/hubluam/blob/main/Functions.lua"))()
 
 local Settings = Logic.Settings
 local Players = game:GetService("Players")
