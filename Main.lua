@@ -1,7 +1,7 @@
 -- [[ XPEL HUB - VISUAL INTERFACE ]]
 -- Certifique-se que o Functions.lua foi carregado ou use a lógica abaixo:
 
-local Functions = loadstring(game:HttpGet("LINK_PARA_SEU_FUNCTIONS_LUA"))() -- Se estiver no GitHub
+local Functions = loadstring(game:HttpGet("https://raw.githubusercontent.com/PAPAINOEL9643/hubluam/refs/heads/main/Functions.lua"))() -- Se estiver no GitHub
 -- Para testes locais, você pode apenas colar o código de Functions acima antes deste.
 
 local Settings = _G.XPEL_Settings
