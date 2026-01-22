@@ -1,17 +1,39 @@
 -- [[ XPEL HUB - VISUAL INTERFACE V2.1 (FIXED + MODERN) ]]
-local Functions = loadstring(game:HttpGet("https://raw.githubusercontent.com/PAPAINOEL9643/hubluam/refs/heads/main/Functions.lua"))()
-local Settings = _G.XPEL_Settings
 local Players = game:GetService("Players")
 local MarketplaceService = game:GetService("MarketplaceService")
-local LocalPlayer = Players.LocalPlayer
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+-- Carregamento de Funções Externas
+local success_functions, Functions = pcall(function()
+    return loadstring(game:HttpGet("https://raw.githubusercontent.com/PAPAINOEL9643/hubluam/refs/heads/main/Functions.lua"))()
+end)
+
+if not success_functions then 
+    warn("Falha ao carregar Functions.lua")
+    return 
+end
+
+-- Garantir que Settings exista para não dar erro de "nil value"
+if not _G.XPEL_Settings then
+    _G.XPEL_Settings = {
+        Aimbot = false,
+        Aimbot360 = false,
+        ESP = {
+            Enabled = false,
+            Box = false,
+            Names = false
+        }
+    }
+end
+local Settings = _G.XPEL_Settings
 
 -- UI CORE
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "XPEL_UI_" .. math.random(100,999)
-ScreenGui.Parent = Functions.GetSafeParent()
+ScreenGui.Parent = (RunService:IsStudio() and LocalPlayer.PlayerGui or Functions.GetSafeParent())
 ScreenGui.ResetOnSpawn = false
 
 -- DRAGGABLE FUNCTION
@@ -186,7 +208,7 @@ CloseBtn.TextColor3 = Color3.fromRGB(255, 80, 80)
 CloseBtn.BackgroundTransparency = 1
 CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.TextSize = 22
-CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() Settings.Running = false end)
+CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() _G.XPEL_Settings.Running = false end)
 
 local MinimizeBtn = Instance.new("TextButton", ControlFrame)
 MinimizeBtn.Text = "−"
@@ -210,12 +232,12 @@ local PaginaInicio = CreateTab("Início")
 local PaginaAimbot = CreateTab("Aimbot")
 local PaginaVisual = CreateTab("Visual")
 
--- INFO DO MAPA (LÓGICA)
-local success, gameInfo = pcall(function()
+-- INFO DO MAPA
+local success_map, gameInfo = pcall(function()
     return MarketplaceService:GetProductInfo(game.PlaceId)
 end)
-local gameName = success and gameInfo.Name or "Mapa Desconhecido"
-local gameIcon = "rbxthumb://type=Asset&id=" .. (success and gameInfo.IconImageAssetId or 0) .. "&w=150&h=150"
+local gameName = success_map and gameInfo.Name or "Mapa Desconhecido"
+local gameIcon = "rbxthumb://type=Asset&id=" .. (success_map and gameInfo.IconImageAssetId or 0) .. "&w=150&h=150"
 
 -- CONTEÚDO INÍCIO
 local Welcome = Instance.new("TextLabel", PaginaInicio)
@@ -226,12 +248,12 @@ Welcome.BackgroundTransparency = 1
 Welcome.Font = Enum.Font.GothamBold
 Welcome.TextSize = 14
 
--- CARD DO MAPA
 local GameCard = Instance.new("Frame", PaginaInicio)
 GameCard.Size = UDim2.new(0.95, 0, 0, 100)
 GameCard.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 GameCard.BorderSizePixel = 0
-local CardCorner = Instance.new("UICorner", GameCard).CornerRadius = UDim.new(0, 10)
+local CardCorner = Instance.new("UICorner", GameCard)
+CardCorner.CornerRadius = UDim.new(0, 10)
 
 local MapImage = Instance.new("ImageLabel", GameCard)
 MapImage.Size = UDim2.new(0, 80, 0, 80)
@@ -280,8 +302,11 @@ AddToggle(PaginaVisual, "ESP Geral", function(v) Settings.ESP.Enabled = v end)
 AddToggle(PaginaVisual, "ESP Box", function(v) Settings.ESP.Box = v end)
 AddToggle(PaginaVisual, "ESP Nomes", function(v) Settings.ESP.Names = v end)
 
--- INICIALIZAÇÃO
-Functions.Init()
+-- INICIALIZAÇÃO SEGURA
+pcall(function()
+    Functions.Init()
+end)
+
 Pages["Início"].Page.Visible = true
 Pages["Início"].Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
 Pages["Início"].Btn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
