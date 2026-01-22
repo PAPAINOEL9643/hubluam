@@ -4,7 +4,7 @@
 local user = "PAPAINOEL9643"
 local repo = "hubluam"
 -- Link Raw corrigido para garantir o carregamento do código puro
-local url = "https://raw.githubusercontent.com/"..user.."/"..repo.."/main/Functions.lua"
+local url = "https://raw.githubusercontent.com/PAPAINOEL9643/hubluam/refs/heads/main/Functions.lua"
 
 local Logic
 local success, err = pcall(function()
