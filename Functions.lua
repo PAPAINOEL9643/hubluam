@@ -1,5 +1,4 @@
-
--- [[ XPEL HUB - LOGIC ENGINE ]]
+-- [[ XPEL HUB - LOGIC ENGINE PRO V4 ]]
 local Logic = {}
 
 -- ================= SERVICES =================
@@ -12,7 +11,7 @@ local Lighting = game:GetService("Lighting")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
--- ================= CONFIGURAÇÕES =================
+-- ================= CONFIGURAÇÕES INICIAIS =================
 Logic.Settings = {
     Aimbot = false,
     Aimbot360 = false,
@@ -21,6 +20,8 @@ Logic.Settings = {
     Smoothness = 0.5,
     VisualSmoothness = 50,
     TargetPart = "Head",
+    WallCheck = true, -- Novo: Evita puxar através de paredes
+    TeamCheck = true, -- Novo: Não foca em aliados
     
     ESP = {
         Enabled = false,
@@ -65,6 +66,21 @@ pcall(function()
         end)
     end
 end)
+
+-- ================= LÓGICA DE VISIBILIDADE (WALL CHECK) =================
+local function IsVisible(TargetPart)
+    if not Logic.Settings.WallCheck then return true end
+    local RaycastParams = RaycastParams.new()
+    RaycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+    RaycastParams.FilterDescendantsInstances = {LocalPlayer.Character, Camera}
+    
+    local Result = workspace:Raycast(Camera.CFrame.Position, (TargetPart.Position - Camera.CFrame.Position).Unit * 1000, RaycastParams)
+    
+    if Result and Result.Instance:IsDescendantOf(TargetPart.Parent) then
+        return true
+    end
+    return false
+end
 
 -- ================= LÓGICA DE PERFORMANCE =================
 Logic.OptimizePerformance = function(v)
@@ -121,14 +137,15 @@ Logic.CreateESP = function(Player)
         local Head = Char:FindFirstChild("Head")
 
         if not (Hum and HRP and Head and Hum.Health > 0) then Hide() return end
+        if Logic.Settings.TeamCheck and Player.Team == LocalPlayer.Team then Hide() return end
 
-        local topPos, topOnScreen = Camera:WorldToViewportPoint(Head.Position + Vector3.new(0, 0.3, 0))
+        local topPos, topOnScreen = Camera:WorldToViewportPoint(Head.Position + Vector3.new(0, 0.5, 0))
         local bottomPos, bottomOnScreen = Camera:WorldToViewportPoint(HRP.Position - Vector3.new(0, 3, 0))
 
         if not (topOnScreen and bottomOnScreen) then Hide() return end
 
         local height = math.abs(topPos.Y - bottomPos.Y)
-        local width = height * 0.5
+        local width = height * 0.55
 
         Box.Visible = Logic.Settings.ESP.Box
         Box.Size = Vector2.new(width, height)
@@ -136,9 +153,9 @@ Logic.CreateESP = function(Player)
         Box.Color = Logic.Settings.ESP.Colors.Main
 
         Name.Visible = Logic.Settings.ESP.Names
-        Name.Text = Player.Name
+        Name.Text = Player.DisplayName or Player.Name
         Name.Color = Color3.new(1,1,1)
-        Name.Position = Vector2.new(topPos.X, topPos.Y - 14)
+        Name.Position = Vector2.new(topPos.X, topPos.Y - 16)
 
         Line.Visible = Logic.Settings.ESP.Lines
         Line.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
@@ -156,23 +173,35 @@ Logic.CreateESP = function(Player)
     }
 end
 
--- ================= LÓGICA DO AIMBOT =================
+-- ================= LÓGICA DO AIMBOT MELHORADA =================
 Logic.GetClosest = function()
     local target, shortest = nil, (Logic.Settings.Aimbot360 and math.huge or Logic.Settings.FOV)
+    
     for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild(Logic.Settings.TargetPart) then
-            local humanoid = plr.Character:FindFirstChildOfClass("Humanoid")
-            if humanoid and humanoid.Health > 0 then
-                local part = plr.Character[Logic.Settings.TargetPart]
-                local pos, onScreen = Camera:WorldToViewportPoint(part.Position)
+        if plr ~= LocalPlayer then
+            -- Team Check
+            if Logic.Settings.TeamCheck and plr.Team == LocalPlayer.Team then continue end
+            
+            local char = plr.Character
+            if char then
+                local hum = char:FindFirstChildOfClass("Humanoid")
+                -- Fallback para encontrar a parte alvo em qualquer jogo
+                local part = char:FindFirstChild(Logic.Settings.TargetPart) or char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso")
                 
-                if onScreen or Logic.Settings.Aimbot360 then
-                    local mouseLoc = UserInputService:GetMouseLocation()
-                    local dist = (Vector2.new(pos.X, pos.Y) - mouseLoc).Magnitude
+                if hum and hum.Health > 0 and part then
+                    local pos, onScreen = Camera:WorldToViewportPoint(part.Position)
                     
-                    if dist < shortest then
-                        shortest = dist
-                        target = part
+                    if onScreen or Logic.Settings.Aimbot360 then
+                        -- Verifica se o inimigo está visível
+                        if IsVisible(part) then
+                            local mouseLoc = UserInputService:GetMouseLocation()
+                            local dist = (Vector2.new(pos.X, pos.Y) - mouseLoc).Magnitude
+                            
+                            if dist < shortest then
+                                shortest = dist
+                                target = part
+                            end
+                        end
                     end
                 end
             end
