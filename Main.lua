@@ -11,7 +11,6 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local Lighting = game:GetService("Lighting")
-local MarketPlaceService = game:GetService("MarketplaceService")
 local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 
@@ -85,6 +84,7 @@ local UserAvatar = Instance.new("ImageLabel", ProfileFrame)
 UserAvatar.Size = UDim2.new(0, 70, 0, 70)
 UserAvatar.Position = UDim2.new(0.5, -35, 0.2, 0)
 UserAvatar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+-- Puxa a foto de quem está executando agora:
 UserAvatar.Image = Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150)
 Instance.new("UICorner", UserAvatar).CornerRadius = UDim.new(1, 0)
 local AvStroke = Instance.new("UIStroke", UserAvatar)
@@ -95,7 +95,7 @@ local UserLabel = Instance.new("TextLabel", ProfileFrame)
 UserLabel.Size = UDim2.new(1, 0, 0, 30)
 UserLabel.Position = UDim2.new(0, 0, 0.75, 0)
 UserLabel.BackgroundTransparency = 1
-UserLabel.Text = LocalPlayer.DisplayName
+UserLabel.Text = LocalPlayer.DisplayName -- Nome do usuário dinâmico
 UserLabel.TextColor3 = Color3.new(1, 1, 1)
 UserLabel.Font = Enum.Font.GothamBold
 UserLabel.TextSize = 14
@@ -227,54 +227,20 @@ local function AddSlider(parent, text, min, max, default, callback)
     UserInputService.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
 end
 
--- [ SECTION 7: CRIAÇÃO DE CONTEÚDO DINÂMICO ]
+-- [ SECTION 7: CRIAÇÃO DE CONTEÚDO ]
 local TabInicio = CreateTab("Início")
 local TabAimbot = CreateTab("Aimbot")
 local TabVisual = CreateTab("Visual")
 local TabPerf   = CreateTab("Sistema")
 
--- Obtendo informações do Jogo Atual
-local gameInfo = MarketPlaceService:GetProductInfo(game.PlaceId)
-
--- Aba Início (Visual Profissional com Jogo)
-local GameIcon = Instance.new("ImageLabel", TabInicio)
-GameIcon.Size = UDim2.new(0, 100, 0, 100)
-GameIcon.Position = UDim2.new(0.5, -50, 0, 10)
-GameIcon.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-GameIcon.Image = "rbxassetid://" .. game.PlaceId -- Tenta puxar o ícone pelo ID do mapa
--- Caso rbxassetid não carregue o ícone direto, usamos uma thumbnail:
-GameIcon.Image = "https://www.roblox.com/asset-thumbnail/image?assetId="..game.PlaceId.."&width=420&height=420&format=png"
-Instance.new("UICorner", GameIcon).CornerRadius = UDim.new(0, 8)
-local IconStroke = Instance.new("UIStroke", GameIcon)
-IconStroke.Color = Settings.ThemeColor
-IconStroke.Thickness = 2
-
-local GameNameLabel = Instance.new("TextLabel", TabInicio)
-GameNameLabel.Size = UDim2.new(1, 0, 0, 30)
-GameNameLabel.Position = UDim2.new(0, 0, 0, 115)
-GameNameLabel.BackgroundTransparency = 1
-GameNameLabel.Text = gameInfo.Name -- Nome do jogo dinâmico
-GameNameLabel.TextColor3 = Color3.new(1, 1, 1)
-GameNameLabel.Font = Enum.Font.GothamBold
-GameNameLabel.TextSize = 18
-
+-- Aba Início
 local Welcome = Instance.new("TextLabel", TabInicio)
-Welcome.Size = UDim2.new(1, 0, 0, 20)
-Welcome.Position = UDim2.new(0, 0, 0, 145)
-Welcome.Text = "XPEL ULTRA V4 - ATIVO"
-Welcome.TextColor3 = Settings.ThemeColor
-Welcome.Font = Enum.Font.GothamMedium
-Welcome.BackgroundTransparency = 1
-Welcome.TextSize = 14
+Welcome.Size = UDim2.new(1, 0, 0, 30); Welcome.Text = "XPEL ULTRA V4"; Welcome.TextColor3 = Color3.new(1,1,1)
+Welcome.Font = Enum.Font.GothamBold; Welcome.BackgroundTransparency = 1; Welcome.TextSize = 16
 
 local FPSLabel = Instance.new("TextLabel", TabInicio)
-FPSLabel.Size = UDim2.new(1, 0, 0, 40)
-FPSLabel.Position = UDim2.new(0, 0, 0, 170)
-FPSLabel.Text = "Calculando FPS..."
-FPSLabel.TextColor3 = Color3.new(1, 1, 1)
-FPSLabel.Font = Enum.Font.GothamBold
-FPSLabel.TextSize = 22
-FPSLabel.BackgroundTransparency = 1
+FPSLabel.Size = UDim2.new(1, 0, 0, 40); FPSLabel.Text = "Calculando FPS..."; FPSLabel.TextColor3 = Settings.ThemeColor
+FPSLabel.Font = Enum.Font.GothamBold; FPSLabel.TextSize = 22; FPSLabel.BackgroundTransparency = 1
 
 -- Aba Aimbot
 AddToggle(TabAimbot, "Ativar Aimbot", function(v) Settings.Aimbot = v end)
