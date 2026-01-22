@@ -1,4 +1,4 @@
--- [[ XPEL HUB - LOGIC ENGINE PRO V4 - RIVAIS OPTIMIZED ]]
+-- [[ XPEL HUB - LOGIC ENGINE PRO V4 - UNIVERSAL EDITION ]]
 local Logic = {}
 
 -- ================= SERVICES =================
@@ -55,28 +55,46 @@ Logic.GetSafeParent = function()
     return coregui
 end
 
--- ================= LÓGICA DE VISIBILIDADE (RIVAIS FIX) =================
-local function IsVisible(TargetPart)
+-- ================= FUNÇÃO DE BUSCA DE PERSONAGEM (UNIVERSAL) =================
+-- Esta função encontra o corpo do jogador não importa onde ele esteja ou o nome das partes
+local function GetCharacterData(plr)
+    local char = plr.Character
+    if not char then return nil end
+    
+    local humanoid = char:FindFirstChildOfClass("Humanoid")
+    if not humanoid or humanoid.Health <= 0 then return nil end
+    
+    -- Tenta achar a cabeça ou o tronco por nome ou por classe
+    local head = char:FindFirstChild("Head") or char:FindFirstChild("FakeHead") or char:FindFirstChild("UpperTorso")
+    local root = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("LowerTorso")
+    
+    -- Se ainda não achou, pega a primeira parte base que encontrar
+    if not head or not root then
+        for _, v in pairs(char:GetChildren()) do
+            if v:IsA("BasePart") then
+                root = root or v
+                head = head or v
+            end
+        end
+    end
+    
+    return {Character = char, Humanoid = humanoid, RootPart = root, Head = head}
+end
+
+-- ================= LÓGICA DE VISIBILIDADE (RAYCAST UNIVERSAL) =================
+local function IsVisible(TargetPart, Character)
     if not Logic.Settings.WallCheck then return true end
     
-    -- No Rivais, o personagem pode estar dentro de pastas específicas
-    -- Adicionamos uma verificação mais robusta ignorando o que está perto da câmera
     local RayParams = RaycastParams.new()
     RayParams.FilterType = Enum.RaycastFilterType.Exclude
-    RayParams.FilterDescendantsInstances = {LocalPlayer.Character, Camera, workspace:FindFirstChild("Ignore") or workspace}
+    RayParams.FilterDescendantsInstances = {LocalPlayer.Character, Camera, Character}
     RayParams.IgnoreWater = true
     
     local Direction = (TargetPart.Position - Camera.CFrame.Position).Unit * 1000
     local Result = workspace:Raycast(Camera.CFrame.Position, Direction, RayParams)
     
-    if Result then
-        local Hit = Result.Instance
-        -- Verifica se o que o raio atingiu pertence ao modelo do inimigo
-        if Hit:IsDescendantOf(TargetPart.Parent) or Hit.Parent == TargetPart.Parent then
-            return true
-        end
-    end
-    return false
+    -- Se não houver nada bloqueando o caminho até o personagem, retorna true
+    return Result == nil
 end
 
 -- ================= LÓGICA DE PERFORMANCE =================
@@ -93,7 +111,7 @@ Logic.OptimizePerformance = function(v)
     end
 end
 
--- ================= ESP ENGINE =================
+-- ================= ESP ENGINE UNIVERSAL =================
 Logic.ESP_Table = {}
 
 Logic.CreateESP = function(Player)
@@ -101,105 +119,75 @@ Logic.CreateESP = function(Player)
     local Name = Drawing.new("Text")
     local Line = Drawing.new("Line")
 
-    Box.Visible = false
-    Box.Thickness = 1
-    Box.Filled = false
-
-    Name.Visible = false
-    Name.Size = 13
-    Name.Center = true
-    Name.Outline = true
-
-    Line.Visible = false
-    Line.Thickness = 1
-
     local function Hide()
-        Box.Visible = false
-        Name.Visible = false
-        Line.Visible = false
+        Box.Visible = false; Name.Visible = false; Line.Visible = false
     end
 
     local Connection
     Connection = RunService.RenderStepped:Connect(function()
         if not Logic.Settings.Running or not Logic.Settings.ESP.Enabled then
-            Hide()
-            return
+            Hide() return
         end
 
-        local Char = Player.Character
-        if not Char then Hide() return end
-
-        local Hum = Char:FindFirstChildOfClass("Humanoid")
-        local HRP = Char:FindFirstChild("HumanoidRootPart") or Char:FindFirstChild("Torso")
-        local Head = Char:FindFirstChild("Head") or Char:FindFirstChild("FakeHead")
-
-        if not (Hum and HRP and Hum.Health > 0) then Hide() return end
+        local data = GetCharacterData(Player)
+        if not data then Hide() return end
         if Logic.Settings.TeamCheck and Player.Team == LocalPlayer.Team then Hide() return end
 
-        local pos, onScreen = Camera:WorldToViewportPoint(HRP.Position)
-
+        local pos, onScreen = Camera:WorldToViewportPoint(data.RootPart.Position)
         if not onScreen then Hide() return end
 
-        local height = math.abs(Camera:WorldToViewportPoint(HRP.Position + Vector3.new(0, 3, 0)).Y - Camera:WorldToViewportPoint(HRP.Position - Vector3.new(0, 3, 0)).Y)
-        local width = height * 0.6
+        -- Tamanho adaptativo para qualquer tipo de corpo
+        local sizeY = math.abs(Camera:WorldToViewportPoint(data.RootPart.Position + Vector3.new(0, 3, 0)).Y - Camera:WorldToViewportPoint(data.RootPart.Position - Vector3.new(0, 3, 0)).Y)
+        local sizeX = sizeY * 0.6
 
         Box.Visible = Logic.Settings.ESP.Box
-        Box.Size = Vector2.new(width, height)
-        Box.Position = Vector2.new(pos.X - width / 2, pos.Y - height / 2)
+        Box.Size = Vector2.new(sizeX, sizeY)
+        Box.Position = Vector2.new(pos.X - sizeX / 2, pos.Y - sizeY / 2)
         Box.Color = Logic.Settings.ESP.Colors.Main
 
         Name.Visible = Logic.Settings.ESP.Names
         Name.Text = Player.DisplayName or Player.Name
-        Name.Color = Color3.new(1,1,1)
-        Name.Position = Vector2.new(pos.X, pos.Y - (height/2) - 16)
+        Name.Position = Vector2.new(pos.X, pos.Y - (sizeY/2) - 16)
+        Name.Outline = true; Name.Center = true; Name.Size = 13; Name.Color = Color3.new(1,1,1)
 
         Line.Visible = Logic.Settings.ESP.Lines
         Line.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
-        Line.To = Vector2.new(pos.X, pos.Y + (height/2))
+        Line.To = Vector2.new(pos.X, pos.Y + (sizeY/2))
         Line.Color = Logic.Settings.ESP.Colors.Main
     end)
 
     Logic.ESP_Table[Player] = {
         Remove = function()
             if Connection then Connection:Disconnect() end
-            Box:Remove()
-            Name:Remove()
-            Line:Remove()
+            Box:Remove(); Name:Remove(); Line:Remove()
         end
     }
 end
 
--- ================= LÓGICA DO AIMBOT MELHORADA (RIVAIS FIX) =================
+-- ================= LÓGICA DO AIMBOT UNIVERSAL =================
 Logic.GetClosest = function()
     local target, shortest = nil, (Logic.Settings.Aimbot360 and math.huge or Logic.Settings.FOV)
     
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr ~= LocalPlayer then
-            -- Team Check (Rivais usa sistema de Times)
             if Logic.Settings.TeamCheck and plr.Team == LocalPlayer.Team then continue end
             
-            local char = plr.Character
-            if char then
-                local hum = char:FindFirstChildOfClass("Humanoid")
+            local data = GetCharacterData(plr)
+            if data then
+                -- Define a parte alvo com base nas configurações ou no que estiver disponível
+                local targetPart = data.Character:FindFirstChild(Logic.Settings.TargetPart) or data.Head or data.RootPart
                 
-                -- O Rivais às vezes usa nomes diferentes ou partes invisíveis para o hitbox
-                -- Vamos tentar encontrar a melhor parte disponível
-                local part = char:FindFirstChild(Logic.Settings.TargetPart) 
-                    or char:FindFirstChild("HumanoidRootPart") 
-                    or char:FindFirstChild("UpperTorso")
-                    or char:FindFirstChild("Torso")
-                
-                if hum and hum.Health > 0 and part then
-                    local pos, onScreen = Camera:WorldToViewportPoint(part.Position)
+                if targetPart then
+                    local pos, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
                     
                     if onScreen or Logic.Settings.Aimbot360 then
-                        if IsVisible(part) then
+                        if IsVisible(targetPart, data.Character) then
                             local mouseLoc = UserInputService:GetMouseLocation()
                             local dist = (Vector2.new(pos.X, pos.Y) - mouseLoc).Magnitude
                             
                             if dist < shortest then
                                 shortest = dist
-                                target = part
+                                target = targetPart
                             end
                         end
                     end
