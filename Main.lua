@@ -1,4 +1,4 @@
--- [[ XPEL HUB - VISUAL INTERFACE CORRIGIDO ]]
+-- [[ XPEL HUB - VISUAL INTERFACE REVISADO ]]
 local Functions = loadstring(game:HttpGet("https://raw.githubusercontent.com/PAPAINOEL9643/hubluam/refs/heads/main/Functions.lua"))()
 
 local Settings = _G.XPEL_Settings
@@ -36,172 +36,185 @@ end
 
 -- MAIN FRAME
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 600, 0, 400)
-MainFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
+MainFrame.Size = UDim2.new(0, 580, 0, 380)
+MainFrame.Position = UDim2.new(0.5, -290, 0.5, -190)
 MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
 MainFrame.BorderSizePixel = 0
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
 
 local MainStroke = Instance.new("UIStroke", MainFrame)
 MainStroke.Color = Color3.fromRGB(0, 150, 255)
-MainStroke.Thickness = 1.5
+MainStroke.Thickness = 1.8
 MakeDraggable(MainFrame)
 
 -- ================= SIDEBAR (ESQUERDA) =================
 local SideBar = Instance.new("Frame", MainFrame)
-SideBar.Size = UDim2.new(0, 170, 1, 0)
-SideBar.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
+SideBar.Size = UDim2.new(0, 160, 1, 0)
+SideBar.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
 SideBar.BorderSizePixel = 0
 local SideCorner = Instance.new("UICorner", SideBar)
 SideCorner.CornerRadius = UDim.new(0, 10)
 
--- Esconder cantos direitos da sidebar para unificar com o fundo
+-- Fix para não mostrar curva no lado direito da sidebar
 local SideFix = Instance.new("Frame", SideBar)
-SideFix.Size = UDim2.new(0, 15, 1, 0)
-SideFix.Position = UDim2.new(1, -15, 0, 0)
-SideFix.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
+SideFix.Size = UDim2.new(0, 20, 1, 0)
+SideFix.Position = UDim2.new(1, -20, 0, 0)
+SideFix.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
 SideFix.BorderSizePixel = 0
-SideFix.ZIndex = 0
 
--- PERFIL DO PLAYER
+-- PERFIL
 local ProfileFrame = Instance.new("Frame", SideBar)
 ProfileFrame.Size = UDim2.new(1, 0, 0, 100)
 ProfileFrame.BackgroundTransparency = 1
 
 local PlayerImage = Instance.new("ImageLabel", ProfileFrame)
-PlayerImage.Size = UDim2.new(0, 50, 0, 50)
-PlayerImage.Position = UDim2.new(0.5, -25, 0, 15)
+PlayerImage.Size = UDim2.new(0, 55, 0, 55)
+PlayerImage.Position = UDim2.new(0.5, -27, 0, 15)
 PlayerImage.Image = "rbxthumb://type=AvatarHeadShot&id=" .. LocalPlayer.UserId .. "&w=150&h=150"
 Instance.new("UICorner", PlayerImage).CornerRadius = UDim.new(1, 0)
 
 local PlayerName = Instance.new("TextLabel", ProfileFrame)
 PlayerName.Size = UDim2.new(1, 0, 0, 20)
-PlayerName.Position = UDim2.new(0, 0, 0, 70)
+PlayerName.Position = UDim2.new(0, 0, 0, 75)
 PlayerName.BackgroundTransparency = 1
 PlayerName.Text = LocalPlayer.DisplayName
 PlayerName.TextColor3 = Color3.fromRGB(255, 255, 255)
 PlayerName.Font = Enum.Font.GothamBold
-PlayerName.TextSize = 12
+PlayerName.TextSize = 11
 
--- CONTAINER DAS ABAS (LISTAGEM VERTICAL)
+-- BOTÕES DA SIDEBAR
 local TabHolder = Instance.new("Frame", SideBar)
 TabHolder.Size = UDim2.new(1, 0, 1, -110)
-TabHolder.Position = UDim2.new(0, 0, 0, 100)
+TabHolder.Position = UDim2.new(0, 0, 0, 110)
 TabHolder.BackgroundTransparency = 1
 
 local TabList = Instance.new("UIListLayout", TabHolder)
 TabList.HorizontalAlignment = Enum.HorizontalAlignment.Center
-TabList.SortOrder = Enum.SortOrder.LayoutOrder
 TabList.Padding = UDim.new(0, 8)
 
--- ================= ÁREA DE CONTEÚDO =================
+-- ================= ÁREA DE CONTEÚDO (PAGINAS) =================
 local PageContainer = Instance.new("Frame", MainFrame)
-PageContainer.Position = UDim2.new(0, 185, 0, 15) -- Começa após a sidebar
-PageContainer.Size = UDim2.new(1, -200, 1, -30)
+PageContainer.Position = UDim2.new(0, 175, 0, 15)
+PageContainer.Size = UDim2.new(1, -190, 1, -30)
 PageContainer.BackgroundTransparency = 1
 
 local Pages = {}
 
-local function CreateTab(name, order)
+local function CreateTab(name)
     local TabBtn = Instance.new("TextButton", TabHolder)
-    TabBtn.Size = UDim2.new(0, 140, 0, 35)
-    TabBtn.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+    TabBtn.Size = UDim2.new(0, 130, 0, 32)
+    TabBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
     TabBtn.Text = name:upper()
     TabBtn.Font = Enum.Font.GothamBold
-    TabBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
-    TabBtn.TextSize = 11
-    TabBtn.LayoutOrder = order
-    Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 6)
+    TabBtn.TextColor3 = Color3.fromRGB(140, 140, 140)
+    TabBtn.TextSize = 10
+    Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 5)
 
     local Page = Instance.new("ScrollingFrame", PageContainer)
     Page.Size = UDim2.new(1, 0, 1, 0)
     Page.BackgroundTransparency = 1
     Page.Visible = false
-    Page.ScrollBarThickness = 2
-    Page.CanvasSize = UDim2.new(0, 0, 0, 0) -- Ajuste automático via UIList
+    Page.ScrollBarThickness = 0
+    Page.CanvasSize = UDim2.new(0, 0, 0, 0)
     
     local PageList = Instance.new("UIListLayout", Page)
-    PageList.Padding = UDim.new(0, 10)
-    PageList.SortOrder = Enum.SortOrder.LayoutOrder
-    
-    -- Auto-ajuste do tamanho do scroll
+    PageList.Padding = UDim.new(0, 8)
+    PageList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+    -- Ajuste automático do tamanho do scroll
     PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        Page.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + 20)
+        Page.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + 10)
     end)
 
     TabBtn.MouseButton1Click:Connect(function()
         for _, p in pairs(Pages) do 
             p.Page.Visible = false 
-            p.Btn.TextColor3 = Color3.fromRGB(150,150,150)
-            p.Btn.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+            p.Btn.TextColor3 = Color3.fromRGB(140,140,140)
+            p.Btn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
         end
         Page.Visible = true
         TabBtn.TextColor3 = Color3.fromRGB(0, 150, 255)
-        TabBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
+        TabBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     end)
     
     Pages[name] = {Page = Page, Btn = TabBtn}
     return Page
 end
 
--- COMPONENTE TOGGLE
+-- COMPONENTE TOGGLE (CORRIGIDO E CENTRALIZADO)
 local function AddToggle(parent, text, callback)
-    local btn = Instance.new("TextButton", parent)
-    btn.Size = UDim2.new(1, -10, 0, 40)
-    btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    btn.Text = "      " .. text
-    btn.TextColor3 = Color3.fromRGB(200, 200, 200)
-    btn.Font = Enum.Font.GothamMedium
-    btn.TextSize = 13
-    btn.TextXAlignment = Enum.TextXAlignment.Left
-    Instance.new("UICorner", btn)
+    local ToggleFrame = Instance.new("TextButton", parent)
+    ToggleFrame.Size = UDim2.new(1, -10, 0, 40)
+    ToggleFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    ToggleFrame.Text = "      " .. text
+    ToggleFrame.TextColor3 = Color3.fromRGB(200, 200, 200)
+    ToggleFrame.Font = Enum.Font.GothamMedium
+    ToggleFrame.TextSize = 13
+    ToggleFrame.TextXAlignment = Enum.TextXAlignment.Left
+    Instance.new("UICorner", ToggleFrame)
+
+    local StatusIndicator = Instance.new("Frame", ToggleFrame)
+    StatusIndicator.Size = UDim2.new(0, 4, 0, 20)
+    StatusIndicator.Position = UDim2.new(0, 10, 0.5, -10)
+    StatusIndicator.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    Instance.new("UICorner", StatusIndicator)
 
     local active = false
-    btn.MouseButton1Click:Connect(function()
+    ToggleFrame.MouseButton1Click:Connect(function()
         active = not active
-        btn.TextColor3 = active and Color3.fromRGB(0, 150, 255) or Color3.fromRGB(200, 200, 200)
+        StatusIndicator.BackgroundColor3 = active and Color3.fromRGB(0, 150, 255) or Color3.fromRGB(40, 40, 40)
+        ToggleFrame.TextColor3 = active and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 200)
         callback(active)
     end)
 end
 
--- CRIANDO AS ABAS (Com ordem definida)
-local TabInicio = CreateTab("Início", 1)
-local TabAimbot = CreateTab("Aimbot", 2)
-local TabVisual = CreateTab("Visual", 3)
+-- CRIANDO ABAS
+local TabInicio = CreateTab("Início")
+local TabAimbot = CreateTab("Aimbot")
+local TabVisual = CreateTab("Visual")
 
 -- ================= CONTEÚDO INÍCIO =================
-local GameSection = Instance.new("Frame", TabInicio)
-GameSection.Size = UDim2.new(1, -10, 0, 100)
-GameSection.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-Instance.new("UICorner", GameSection)
+local Welcome = Instance.new("TextLabel", TabInicio)
+Welcome.Size = UDim2.new(1, 0, 0, 40)
+Welcome.BackgroundTransparency = 1
+Welcome.Text = "BEM-VINDO, " .. LocalPlayer.DisplayName:upper()
+Welcome.TextColor3 = Color3.fromRGB(255, 255, 255)
+Welcome.Font = Enum.Font.GothamBold
+Welcome.TextSize = 14
 
-local GName = Instance.new("TextLabel", GameSection)
-GName.Size = UDim2.new(1, -20, 1, 0)
-GName.Position = UDim2.new(0, 15, 0, 0)
+local GameCard = Instance.new("Frame", TabInicio)
+GameCard.Size = UDim2.new(1, -10, 0, 60)
+GameCard.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Instance.new("UICorner", GameCard)
+
+local GName = Instance.new("TextLabel", GameCard)
+GName.Size = UDim2.new(1, 0, 1, 0)
 GName.BackgroundTransparency = 1
-GName.Text = "Jogo: " .. GameInfo.Name
-GName.TextColor3 = Color3.new(1, 1, 1)
-GName.Font = Enum.Font.GothamBold
-GName.TextSize = 14
-GName.TextXAlignment = Enum.TextXAlignment.Left
+GName.Text = "JOGO ATUAL:\n" .. GameInfo.Name
+GName.TextColor3 = Color3.fromRGB(180, 180, 180)
+GName.Font = Enum.Font.GothamSemibold
+GName.TextSize = 12
 
 local FPSLabel = Instance.new("TextLabel", TabInicio)
 FPSLabel.Size = UDim2.new(1, 0, 0, 30)
 FPSLabel.BackgroundTransparency = 1
 FPSLabel.TextColor3 = Color3.fromRGB(0, 255, 120)
-FPSLabel.TextSize = 14
+FPSLabel.TextSize = 12
 FPSLabel.Font = Enum.Font.Code
 RunService.RenderStepped:Connect(function(dt)
-    FPSLabel.Text = "FPS: " .. math.floor(1/dt)
+    FPSLabel.Text = "DESEMPENHO: " .. math.floor(1/dt) .. " FPS"
 end)
 
 -- ================= CONTEÚDO AIMBOT =================
 AddToggle(TabAimbot, "Ativar Aimbot", function(v) Settings.Aimbot = v end)
-AddToggle(TabAimbot, "Aimbot 360", function(v) Settings.Aimbot360 = v end)
+AddToggle(TabAimbot, "Aimbot 360 Graus", function(v) Settings.Aimbot360 = v end)
+AddToggle(TabAimbot, "Verificar Paredes (WallCheck)", function(v) Settings.WallCheck = v end)
 
 -- ================= CONTEÚDO VISUAL =================
-AddToggle(TabVisual, "ESP Box", function(v) Settings.ESP.Box = v end)
-AddToggle(TabVisual, "ESP Names", function(v) Settings.ESP.Names = v end)
+AddToggle(TabVisual, "ESP Box (Caixas)", function(v) Settings.ESP.Box = v end)
+AddToggle(TabVisual, "ESP Nomes", function(v) Settings.ESP.Names = v end)
+AddToggle(TabVisual, "ESP Distância", function(v) Settings.ESP.Distance = v end)
+AddToggle(TabVisual, "Linhas (Tracers)", function(v) Settings.ESP.Tracers = v end)
 
 -- BOTÃO FECHAR
 local CloseBtn = Instance.new("TextButton", MainFrame)
@@ -209,13 +222,13 @@ CloseBtn.Size = UDim2.new(0, 30, 0, 30)
 CloseBtn.Position = UDim2.new(1, -35, 0, 5)
 CloseBtn.Text = "×"
 CloseBtn.TextColor3 = Color3.fromRGB(255, 80, 80)
-CloseBtn.TextSize = 30
+CloseBtn.TextSize = 25
 CloseBtn.BackgroundTransparency = 1
 CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
 
--- INICIAR NA PRIMEIRA ABA
+-- INICIALIZAÇÃO
 Pages["Início"].Page.Visible = true
 Pages["Início"].Btn.TextColor3 = Color3.fromRGB(0, 150, 255)
-Pages["Início"].Btn.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
+Pages["Início"].Btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 
 Functions.Init()
