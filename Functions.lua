@@ -33,7 +33,6 @@ Logic.Settings = {
 }
 
 -- ================= BYPASS & SEGURANÇA AVANÇADA =================
--- Bloqueia detecções comuns que verificam se a câmera está sendo manipulada
 pcall(function()
     local RawIndex; RawIndex = hookmetamethod(game, "__index", function(self, key)
         if not checkcaller() and self == Camera and (key == "CFrame" or key == "Focus") then
@@ -43,37 +42,35 @@ pcall(function()
     end)
 end)
 
--- Função para garantir que o Hub apareça mesmo em jogos com anti-gui
 Logic.GetSafeParent = function()
     local target = nil
     local success = pcall(function()
         target = gethui and gethui() or game:GetService("CoreGui"):FindFirstChild("RobloxGui") or game:GetService("CoreGui")
     end)
-    return success and target or LocalPlayer:WaitForChild("PlayerGui")
+    return (success and target) or LocalPlayer:WaitForChild("PlayerGui")
 end
 
--- ================= LÓGICA DE ALVO (UNIVERSAL) =================
+-- ================= LÓGICA DE ALVO =================
 local function GetBodyPart(char)
     local target = Logic.Settings.TargetPart
-    -- Fallback: Se não achar a cabeça, procura o tronco em qualquer padrão de rig (R6/R15)
     return char:FindFirstChild(target) or char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
 end
 
 local function IsVisible(TargetPart)
     if not Logic.Settings.WallCheck then return true end
     local params = RaycastParams.new()
-    params.FilterType = Enum.RaycastFilterType.Blacklist
+    params.FilterType = Enum.RaycastFilterType.Exclude
     params.FilterDescendantsInstances = {LocalPlayer.Character, Camera}
     
     local result = workspace:Raycast(Camera.CFrame.Position, (TargetPart.Position - Camera.CFrame.Position).Unit * 1000, params)
     return result == nil or result.Instance:IsDescendantOf(TargetPart.Parent)
 end
 
--- ================= ENGINE DE ESP (OTIMIZADA) =================
+-- ================= ENGINE DE ESP =================
 Logic.ESP_Table = {}
 
 Logic.CreateESP = function(Player)
-    if not Player then return end
+    if not Player or Player == LocalPlayer then return end
     
     local Box = Drawing.new("Square"); Box.Visible = false; Box.Thickness = 1; Box.Filled = false
     local Name = Drawing.new("Text"); Name.Visible = false; Name.Size = 14; Name.Center = true; Name.Outline = true
@@ -118,14 +115,9 @@ Logic.CreateESP = function(Player)
                 Line.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
                 Line.To = Vector2.new(pos.X, pos.Y + height/2)
                 Line.Color = Logic.Settings.ESP.Colors.Main
-            else
-                Hide()
-            end
-        else
-            Hide()
-        end
+            else Hide() end
+        else Hide() end
     end)
-
     Logic.ESP_Table[Player] = { Remove = function() connection:Disconnect(); Box:Remove(); Name:Remove(); Line:Remove() end }
 end
 
@@ -157,18 +149,13 @@ Logic.GetClosest = function()
     return target
 end
 
--- ================= PERFORMANCE =================
 Logic.OptimizePerformance = function(v)
     if not v then return end
     for _, obj in pairs(workspace:GetDescendants()) do
-        if obj:IsA("Texture") or obj:IsA("Decal") then
-            obj.Transparency = 1
-        elseif obj:IsA("MeshPart") then
-            obj.TextureID = ""
-        end
+        if obj:IsA("Texture") or obj:IsA("Decal") then obj.Transparency = 1
+        elseif obj:IsA("MeshPart") then obj.TextureID = "" end
     end
     Lighting.GlobalShadows = false
 end
 
--- MUITO IMPORTANTE: Retorna a tabela para o Main.lua
 return Logic
