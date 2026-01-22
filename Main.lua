@@ -3,19 +3,15 @@
 -- [ SECTION 1: INICIALIZAÇÃO E LÓGICA ]
 local user = "PAPAINOEL9643"
 local repo = "hubluam"
--- Link Raw corrigido para garantir o carregamento do código puro
-local url = "https://raw.githubusercontent.com/PAPAINOEL9643/hubluam/refs/heads/main/Functions.lua"
+local url = "https://raw.githubusercontent.com/"..user.."/"..repo.."/main/Functions.lua"
 
-local Logic
-local success, err = pcall(function()
+-- Carrega a lógica com proteção de erro
+local success, Logic = pcall(function()
     return loadstring(game:HttpGet(url))()
 end)
 
-if success and err then
-    Logic = err
-else
-    -- Fallback de segurança caso o GitHub falhe momentaneamente
-    warn("XPEL: Erro ao carregar Logic Engine, tentando novamente...")
+if not success or type(Logic) ~= "table" then
+    warn("ERRO CRÍTICO: Não foi possível carregar a Logic Engine do GitHub!")
     return
 end
 
