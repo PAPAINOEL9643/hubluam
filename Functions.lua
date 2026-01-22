@@ -1,4 +1,4 @@
--- [[ XPEL HUB - LOGIC ENGINE PRO V4 ]]
+-- [[ XPEL HUB - LOGIC ENGINE PRO V4 - ULTRA EDITION ]]
 local Logic = {}
 
 -- ================= SERVICES =================
@@ -18,189 +18,133 @@ Logic.Settings = {
     AimMode = "Sempre", 
     FOV = 150,
     Smoothness = 0.5,
-    VisualSmoothness = 50,
     TargetPart = "Head",
-    WallCheck = true, -- Novo: Evita puxar através de paredes
-    TeamCheck = true, -- Novo: Não foca em aliados
-    
+    WallCheck = true,
+    TeamCheck = true,
     ESP = {
         Enabled = false,
         Box = false,
         Lines = false,
-        Skeleton = false,
         Names = false,
-        Distance = false,
-        FullBody = false,
-        Colors = {
-            Main = Color3.fromRGB(0, 255, 255),
-            Skeleton = Color3.fromRGB(255, 255, 255)
-        }
+        Colors = { Main = Color3.fromRGB(0, 255, 255) }
     },
-    
-    Performance = {
-        NoTextures = false,
-        NoShadows = false
-    },
-    
-    ThemeColor = Color3.fromRGB(0, 150, 255),
-    Running = true
+    Running = true,
+    ThemeColor = Color3.fromRGB(0, 150, 255)
 }
 
--- ================= BYPASS & SECURITY =================
+-- ================= BYPASS & SEGURANÇA AVANÇADA =================
+-- Protege contra detecção de alteração de câmera
+local RawIndex; RawIndex = hookmetamethod(game, "__index", function(self, key)
+    if not checkcaller() and self == Camera and (key == "CFrame" or key == "Focus") then
+        return RawIndex(self, key)
+    end
+    return RawIndex(self, key)
+end)
+
 Logic.GetSafeParent = function()
     local success, coregui = pcall(function() return game:GetService("CoreGui") end)
     if not success then return LocalPlayer:WaitForChild("PlayerGui") end
     if gethui then return gethui() end
-    if coregui:FindFirstChild("RobloxGui") then return coregui.RobloxGui end
     return coregui
 end
 
-pcall(function()
-    if hookmetamethod then
-        local raw_index
-        raw_index = hookmetamethod(game, "__index", function(self, key)
-            if not checkcaller() and (key == "CFrame" or key == "Position") and self == workspace.CurrentCamera then
-                return raw_index(self, key)
-            end
-            return raw_index(self, key)
-        end)
-    end
-end)
+-- ================= LÓGICA DE ALVO (UNIVERSAL) =================
+local function GetBodyPart(char)
+    local target = Logic.Settings.TargetPart
+    -- Tenta achar a cabeça, se não houver, tenta o tronco (funciona em quase todos os jogos)
+    return char:FindFirstChild(target) or char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
+end
 
--- ================= LÓGICA DE VISIBILIDADE (WALL CHECK) =================
 local function IsVisible(TargetPart)
     if not Logic.Settings.WallCheck then return true end
-    local RaycastParams = RaycastParams.new()
-    RaycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-    RaycastParams.FilterDescendantsInstances = {LocalPlayer.Character, Camera}
+    local params = RaycastParams.new()
+    params.FilterType = Enum.RaycastFilterType.Blacklist
+    params.FilterDescendantsInstances = {LocalPlayer.Character, Camera}
     
-    local Result = workspace:Raycast(Camera.CFrame.Position, (TargetPart.Position - Camera.CFrame.Position).Unit * 1000, RaycastParams)
-    
-    if Result and Result.Instance:IsDescendantOf(TargetPart.Parent) then
-        return true
-    end
-    return false
+    local result = workspace:Raycast(Camera.CFrame.Position, (TargetPart.Position - Camera.CFrame.Position).Unit * 1000, params)
+    return result == nil or result.Instance:IsDescendantOf(TargetPart.Parent)
 end
 
--- ================= LÓGICA DE PERFORMANCE =================
-Logic.OptimizePerformance = function(v)
-    for _, obj in pairs(workspace:GetDescendants()) do
-        if v and (obj:IsA("Texture") or obj:IsA("Decal") or obj:IsA("MeshPart")) then
-            if obj:IsA("MeshPart") then obj.TextureID = "" end
-            if obj:IsA("Texture") or obj:IsA("Decal") then obj.Transparency = 1 end
-        end
-    end
-    if v then
-        Lighting.GlobalShadows = false
-        Lighting.OutdoorAmbient = Color3.new(1,1,1)
-    end
-end
-
--- ================= ESP ENGINE =================
+-- ================= ENGINE DE ESP (SEM PISCAMENTO) =================
 Logic.ESP_Table = {}
 
 Logic.CreateESP = function(Player)
-    local Box = Drawing.new("Square")
-    local Name = Drawing.new("Text")
-    local Line = Drawing.new("Line")
+    local Box = Drawing.new("Square"); Box.Visible = false; Box.Thickness = 1; Box.Filled = false
+    local Name = Drawing.new("Text"); Name.Visible = false; Name.Size = 14; Name.Center = true; Name.Outline = true
+    local Line = Drawing.new("Line"); Line.Visible = false; Line.Thickness = 1
 
-    Box.Visible = false
-    Box.Thickness = 1
-    Box.Filled = false
+    local connection
+    connection = RunService.RenderStepped:Connect(function()
+        local function Hide() Box.Visible = false; Name.Visible = false; Line.Visible = false end
 
-    Name.Visible = false
-    Name.Size = 13
-    Name.Center = true
-    Name.Outline = true
-
-    Line.Visible = false
-    Line.Thickness = 1
-
-    local function Hide()
-        Box.Visible = false
-        Name.Visible = false
-        Line.Visible = false
-    end
-
-    local Connection
-    Connection = RunService.RenderStepped:Connect(function()
-        if not Logic.Settings.Running or not Logic.Settings.ESP.Enabled then
+        if not Logic.Settings.Running or not Logic.Settings.ESP.Enabled or Player.Parent == nil then
             Hide()
+            if Player.Parent == nil then connection:Disconnect() end
             return
         end
 
-        local Char = Player.Character
-        if not Char then Hide() return end
+        local char = Player.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        local root = char and char:FindFirstChild("HumanoidRootPart")
 
-        local Hum = Char:FindFirstChildOfClass("Humanoid")
-        local HRP = Char:FindFirstChild("HumanoidRootPart")
-        local Head = Char:FindFirstChild("Head")
+        if char and hum and root and hum.Health > 0 then
+            if Logic.Settings.TeamCheck and Player.Team == LocalPlayer.Team then Hide() return end
 
-        if not (Hum and HRP and Head and Hum.Health > 0) then Hide() return end
-        if Logic.Settings.TeamCheck and Player.Team == LocalPlayer.Team then Hide() return end
+            local pos, onScreen = Camera:WorldToViewportPoint(root.Position)
+            if onScreen then
+                local head = char:FindFirstChild("Head") or root
+                local headPos = Camera:WorldToViewportPoint(head.Position + Vector3.new(0, 0.5, 0))
+                local legPos = Camera:WorldToViewportPoint(root.Position - Vector3.new(0, 3, 0))
+                local height = math.abs(headPos.Y - legPos.Y)
+                local width = height * 0.6
 
-        local topPos, topOnScreen = Camera:WorldToViewportPoint(Head.Position + Vector3.new(0, 0.5, 0))
-        local bottomPos, bottomOnScreen = Camera:WorldToViewportPoint(HRP.Position - Vector3.new(0, 3, 0))
+                -- Box
+                Box.Visible = Logic.Settings.ESP.Box
+                Box.Size = Vector2.new(width, height)
+                Box.Position = Vector2.new(pos.X - width/2, pos.Y - height/2)
+                Box.Color = Logic.Settings.ESP.Colors.Main
 
-        if not (topOnScreen and bottomOnScreen) then Hide() return end
+                -- Name
+                Name.Visible = Logic.Settings.ESP.Names
+                Name.Text = Player.DisplayName or Player.Name
+                Name.Position = Vector2.new(pos.X, pos.Y - height/2 - 15)
+                Name.Color = Color3.new(1,1,1)
 
-        local height = math.abs(topPos.Y - bottomPos.Y)
-        local width = height * 0.55
-
-        Box.Visible = Logic.Settings.ESP.Box
-        Box.Size = Vector2.new(width, height)
-        Box.Position = Vector2.new(topPos.X - width / 2, topPos.Y)
-        Box.Color = Logic.Settings.ESP.Colors.Main
-
-        Name.Visible = Logic.Settings.ESP.Names
-        Name.Text = Player.DisplayName or Player.Name
-        Name.Color = Color3.new(1,1,1)
-        Name.Position = Vector2.new(topPos.X, topPos.Y - 16)
-
-        Line.Visible = Logic.Settings.ESP.Lines
-        Line.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
-        Line.To = Vector2.new(topPos.X, bottomPos.Y)
-        Line.Color = Logic.Settings.ESP.Colors.Main
+                -- Lines
+                Line.Visible = Logic.Settings.ESP.Lines
+                Line.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
+                Line.To = Vector2.new(pos.X, pos.Y + height/2)
+                Line.Color = Logic.Settings.ESP.Colors.Main
+            else
+                Hide()
+            end
+        else
+            Hide()
+        end
     end)
 
-    Logic.ESP_Table[Player] = {
-        Remove = function()
-            if Connection then Connection:Disconnect() end
-            Box:Remove()
-            Name:Remove()
-            Line:Remove()
-        end
-    }
+    Logic.ESP_Table[Player] = { Remove = function() connection:Disconnect(); Box:Remove(); Name:Remove(); Line:Remove() end }
 end
 
 -- ================= LÓGICA DO AIMBOT MELHORADA =================
 Logic.GetClosest = function()
     local target, shortest = nil, (Logic.Settings.Aimbot360 and math.huge or Logic.Settings.FOV)
-    
+    local mouseLoc = UserInputService:GetMouseLocation()
+
     for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= LocalPlayer then
-            -- Team Check
-            if Logic.Settings.TeamCheck and plr.Team == LocalPlayer.Team then continue end
-            
+        if plr ~= LocalPlayer and (not Logic.Settings.TeamCheck or plr.Team ~= LocalPlayer.Team) then
             local char = plr.Character
-            if char then
-                local hum = char:FindFirstChildOfClass("Humanoid")
-                -- Fallback para encontrar a parte alvo em qualquer jogo
-                local part = char:FindFirstChild(Logic.Settings.TargetPart) or char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso")
-                
-                if hum and hum.Health > 0 and part then
-                    local pos, onScreen = Camera:WorldToViewportPoint(part.Position)
-                    
-                    if onScreen or Logic.Settings.Aimbot360 then
-                        -- Verifica se o inimigo está visível
-                        if IsVisible(part) then
-                            local mouseLoc = UserInputService:GetMouseLocation()
-                            local dist = (Vector2.new(pos.X, pos.Y) - mouseLoc).Magnitude
-                            
-                            if dist < shortest then
-                                shortest = dist
-                                target = part
-                            end
+            local part = char and GetBodyPart(char)
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+
+            if part and hum and hum.Health > 0 then
+                local pos, onScreen = Camera:WorldToViewportPoint(part.Position)
+                if onScreen or Logic.Settings.Aimbot360 then
+                    if IsVisible(part) then
+                        local dist = (Vector2.new(pos.X, pos.Y) - mouseLoc).Magnitude
+                        if dist < shortest then
+                            shortest = dist
+                            target = part
                         end
                     end
                 end
