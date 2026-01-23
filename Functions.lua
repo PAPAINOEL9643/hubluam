@@ -10,7 +10,7 @@ local Lighting = game:GetService("Lighting")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
--- CONFIGURAÇÕES (Compartilhadas via Tabela)
+-- CONFIGURAÇÕES (Compartilhadas via Tabela Global)
 _G.XPEL_Settings = {
     Aimbot = false,
     Aimbot360 = false,
@@ -87,10 +87,16 @@ function Functions.CreateESP(Player)
             Box.Size = Vector2.new(width, height)
             Box.Position = Vector2.new(topPos.X - width / 2, topPos.Y)
             Box.Color = Settings.ESP.Colors.Main
+            Box.Thickness = 1
+            Box.Filled = false
 
             Name.Visible = Settings.ESP.Names
             Name.Text = Player.Name
-            Name.Position = Vector2.new(topPos.X, topPos.Y - 14)
+            Name.Size = 14
+            Name.Center = true
+            Name.Outline = true
+            Name.Color = Color3.new(1,1,1)
+            Name.Position = Vector2.new(topPos.X, topPos.Y - 16)
 
             Line.Visible = Settings.ESP.Lines
             Line.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
@@ -135,16 +141,25 @@ end
 
 -- INICIALIZAÇÃO DE LOOPS
 function Functions.Init()
+    -- Limpa ESP antigo se houver
+    for _, data in pairs(ESP_Table) do data.Remove() end
+    
+    -- Cria ESP para jogadores atuais e novos
     for _, p in ipairs(Players:GetPlayers()) do if p ~= LocalPlayer then Functions.CreateESP(p) end end
     Players.PlayerAdded:Connect(function(p) if p ~= LocalPlayer then Functions.CreateESP(p) end end)
+    Players.PlayerRemoving:Connect(function(p) if ESP_Table[p] then ESP_Table[p].Remove() ESP_Table[p] = nil end end)
     
     local FOVCircle = Drawing.new("Circle")
     FOVCircle.Thickness = 1
     FOVCircle.Transparency = 0.5
     FOVCircle.Color = Color3.fromRGB(0, 150, 255)
+    FOVCircle.Filled = false
 
     RunService.RenderStepped:Connect(function()
-        if not Settings.Running then FOVCircle.Visible = false return end
+        if not Settings.Running then 
+            FOVCircle.Visible = false 
+            return 
+        end
         
         FOVCircle.Visible = Settings.Aimbot and not Settings.Aimbot360
         FOVCircle.Position = UserInputService:GetMouseLocation()
